@@ -1,0 +1,13 @@
+services:
+  executive-desk:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - executive_data:/app/data
+    environment:
+      # For HTTPS hosting set EDA_COOKIE_SECURE=1 behind a TLS reverse proxy.
+      EDA_COOKIE_SECURE: "${EDA_COOKIE_SECURE:-0}"
+    restart: unless-stopped
+volumes:
+  executive_data:

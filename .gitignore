@@ -1,0 +1,10 @@
+.venv/
+.vercel/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+/data/*
+!/data/.gitkeep
+/backups/
+/web/eda-local-ca.cer
