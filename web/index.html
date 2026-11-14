@@ -1172,8 +1172,73 @@ html[data-theme="dark"] .memory-search-panel,html[data-theme="dark"] .memory-res
 .v11-tasks-page .v11-task:has(details[open]){z-index:50}
 .v11-tasks-page .v11-menu[open]{z-index:55}
 @media(max-width:700px){.v11-task-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.v11-task-tools>select{flex:1;min-width:120px}.eda-home .eda-menu-list{width:200px;max-width:calc(100vw - 35px)}}
+
+/* 2026-11-14: Home Upcoming menu alignment. Explicit columns prevent the dots
+   from dropping below the row or moving when a record has no checkbox. */
+.eda-home .eda-upcoming-list > .eda-upcoming-row{
+  display:grid!important;
+  grid-template-columns:3px 20px minmax(0,1fr) max-content max-content 32px;
+  gap:9px;align-items:center!important;min-height:66px;padding:10px 0;
+}
+.eda-home .eda-upcoming-row > .eda-source-indicator{grid-column:1;grid-row:1;align-self:center}
+.eda-home .eda-upcoming-row > .check,
+.eda-home .eda-upcoming-row > .eda-upcoming-check-placeholder{grid-column:2;grid-row:1;justify-self:center;align-self:center;margin:0}
+.eda-home .eda-upcoming-check-placeholder{width:20px;height:20px;display:block}
+.eda-home .eda-upcoming-row > input.check{width:20px!important;height:20px!important;min-width:20px!important;min-height:20px!important;max-height:20px!important;padding:0!important;box-sizing:border-box}
+.eda-home .eda-upcoming-row > .eda-upcoming-title{grid-column:3;grid-row:1;align-self:center;min-width:0}
+.eda-home .eda-upcoming-row > .eda-category-tag{grid-column:4;grid-row:1;align-self:center}
+.eda-home .eda-upcoming-row > .eda-priority{grid-column:5;grid-row:1;align-self:center}
+.eda-home .eda-upcoming-row > details.eda-menu{
+  grid-column:6;grid-row:1;justify-self:end;align-self:center!important;
+  position:relative!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+  margin:0!important;transform:none!important;vertical-align:middle!important;
+  width:32px!important;height:32px!important;min-height:32px!important;
+}
+.eda-home .eda-upcoming-row > details.eda-menu > summary{margin:0!important;line-height:1}
+@media(max-width:1200px){
+  .eda-home .eda-upcoming-list > .eda-upcoming-row{
+    grid-template-columns:3px 20px minmax(0,1fr) 0 max-content 32px;
+  }
+  .eda-home .eda-upcoming-row > .eda-category-tag{display:none!important}
+}
+@media(max-width:700px){
+  .eda-home .eda-upcoming-list > .eda-upcoming-row{
+    grid-template-columns:3px 20px minmax(0,1fr) 0 0 32px;
+    gap:7px;min-height:62px;
+  }
+  .eda-home .eda-upcoming-row > .eda-priority{display:none!important}
+  .eda-home .eda-upcoming-row > details.eda-menu{justify-self:end}
+}
+
+/* Home Upcoming final fix: dedicated button grid cell, centered vertically. */
+.eda-home .eda-upcoming-row > .eda-upcoming-action{
+ grid-column:6;grid-row:1;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:34px!important;height:34px!important;min-width:34px!important;
+ margin:0!important;padding:0!important;position:static!important;
+ justify-self:end!important;align-self:center!important;
+ transform:none!important;
+}
+.eda-home .eda-upcoming-action > button.eda-upcoming-more{
+ appearance:none!important;display:flex!important;align-items:center!important;justify-content:center!important;
+ width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important;
+ border:1px solid transparent!important;border-radius:9px!important;
+ background:transparent!important;color:var(--muted)!important;
+ margin:0!important;padding:0!important;position:static!important;transform:none!important;
+ box-shadow:none!important;cursor:pointer;line-height:1!important;
+}
+.eda-home .eda-upcoming-more > svg{width:18px!important;height:18px!important;display:block;flex:0 0 18px}
+.eda-home .eda-upcoming-more:hover,.eda-home .eda-upcoming-more[aria-expanded="true"],.eda-home .eda-upcoming-more:focus-visible{
+ background:var(--rose,#fff0f3)!important;color:var(--pink,#ec5579)!important;outline-offset:2px;
+}
+.eda-home .eda-upcoming-action > .eda-menu-list{display:none!important}
+.eda-home .eda-upcoming-row > .eda-upcoming-title{min-width:0;overflow-wrap:anywhere}
+.eda-home .eda-upcoming-list > .eda-upcoming-row{grid-template-columns:3px 20px minmax(0,1fr) max-content max-content 34px}
+@media(max-width:1200px){.eda-home .eda-upcoming-list > .eda-upcoming-row{grid-template-columns:3px 20px minmax(0,1fr) 0 max-content 34px}}
+@media(max-width:700px){.eda-home .eda-upcoming-list > .eda-upcoming-row{grid-template-columns:3px 20px minmax(0,1fr) 0 0 34px}}
+
 </style>
-<link rel="stylesheet" href="./eda-upgrades.css?v=20261114-fix3" />
+<link rel="stylesheet" href="./eda-upgrades.css?v=20261114-upcoming-action-button-5" />
 </head><body><div id="root"></div><script src="cloud.js"></script><script>
 const ICONS={home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-8h6v8"/>',tasks:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.5 2.5L16 9"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',brain:'<path d="M12 18V6M8 20a4 4 0 0 1-5-4 4 4 0 0 1 1-7 4 4 0 0 1 4-5 4 4 0 0 1 4 4 4 4 0 0 1 4-4 4 4 0 0 1 4 5 4 4 0 0 1 1 7 4 4 0 0 1-5 4 4 4 0 0 1-4-2 4 4 0 0 1-4 2z"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',plus:'<path d="M12 5v14M5 12h14"/>',sparkles:'<path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9zM19 19v4M17 21h4"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',chevron:'<path d="m9 18 6-6-6-6"/>',more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/>',users:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M17 5a4 4 0 0 1 0 7M19 16a5 5 0 0 1 3 5"/>',plane:'<path d="m22 2-8 20-3-9-9-3zM22 2 11 13"/>',file:'<path d="M6 2h9l5 5v15H6zM15 2v6h5M9 13h8M9 17h8"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19 13a7 7 0 0 0 0-2l2-2-2-4-3 1a7 7 0 0 0-2-1l-1-3h-4L8 5a7 7 0 0 0-2 1L3 5 1 9l2 2a7 7 0 0 0 0 2l-2 2 2 4 3-1a7 7 0 0 0 2 1l1 3h4l1-3a7 7 0 0 0 2-1l3 1 2-4z"/>',download:'<path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"/>',upload:'<path d="M12 16V4m-4 4 4-4 4 4M4 17v4h16v-4"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',check:'<path d="m5 12 5 5L20 7"/>',info:'<circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/>',arrow:'<path d="M5 12h14m-6-6 6 6-6 6"/>',message:'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9 9 0 0 1-4-.9L3 21l1.9-5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5z"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',moon:'<path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9 6.3 6.3M17.7 17.7 19.1 19.1M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',shield:'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/>',trash:'<path d="M4 7h16M10 11v7M14 11v7M6 7l1 14h10l1-14M9 7V4h6v3"/>',folder:'<path d="M3 7h7l2 3h9v11H3z"/>',alert:'<path d="M12 3 2 21h20zM12 9v5M12 18h.01"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',briefcase:'<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',pin:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2"/>',building:'<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M9 21v-5h6v5M8 8h1M15 8h1M8 12h1M15 12h1"/>',checklist:'<path d="m3 6 2 2 3-4M11 6h10M3 13h18M3 19h18"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/>',lock:'<rect x="4" y="10" width="16" height="12" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',cloud:'<path d="M20 17.6a4.5 4.5 0 0 0-1.4-8.8A7 7 0 0 0 5.1 11 4 4 0 0 0 6 19h13"/>',mobile:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 7 9-7"/>',video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>',external:'<path d="M14 3h7v7M21 3l-10 10"/><path d="M21 14v7H3V3h7"/>',send:'<path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/>'};
 function icon(n,cl=''){return `<svg class="${cl}" aria-hidden="true" viewBox="0 0 24 24">${ICONS[n]||ICONS.grid}</svg>`}
@@ -2207,14 +2272,43 @@ function edaHomeRecordMenu(r){
  if(r.type==='Events')body+=action('edit-event','Edit Event')+action('delete-event','Move to Trash','class="eda-destructive"');
  const notification=makeNotifications().find(n=>n.rid===r.id&&n.type===r.type);
  if(notification){body+=`<button data-action="eda-home-snooze" data-id="${esc(notification.id)}" data-minutes="60">Snooze alert · 1 hour</button>`;body+=`<button data-action="eda-home-alert-read" data-id="${esc(notification.id)}">${data.notificationState.read[notification.id]?'Mark alert unread':'Mark alert read'}</button>`;}
- return `<details class="eda-menu"><summary aria-label="Actions for ${esc(r.title)}" title="Actions">${icon('more')}</summary><div class="eda-menu-list">${body}</div></details>`;
+ return `<div class="eda-upcoming-action"><button type="button" class="eda-upcoming-more" aria-label="Actions for ${esc(r.title)}" title="Actions for ${esc(r.title)}" aria-haspopup="menu" aria-expanded="false">${icon('more')}</button><div class="eda-menu-list" hidden>${body}</div></div>`;
 }
 // Home menu actions are portalled to document.body so cards underneath cannot
 // cover the dropdown (the original nested details options are not displayed).
 let edaOpenHomeMenu=null;
 function edaCloseHomeMenu(){
- if(edaOpenHomeMenu){const d=edaOpenHomeMenu.details;edaOpenHomeMenu.popup.remove();edaOpenHomeMenu=null;if(d?.isConnected&&d.open)d.open=false;}
+ if(edaOpenHomeMenu){const {details:d,trigger,popup}=edaOpenHomeMenu;popup.remove();edaOpenHomeMenu=null;if(trigger?.isConnected)trigger.setAttribute('aria-expanded','false');if(d?.isConnected&&d.open)d.open=false;}
 }
+// Home Upcoming uses a fixed-size button rather than a native <details> element.
+// This avoids the browser dropping the dots onto a second grid row.
+document.addEventListener('click',e=>{
+ const trigger=e.target.closest('.eda-home .eda-upcoming-more');
+ if(!trigger)return;
+ e.preventDefault();e.stopImmediatePropagation();
+ if(edaOpenHomeMenu?.trigger===trigger){edaCloseHomeMenu();return;}
+ edaCloseHomeMenu();
+ const source=trigger.parentElement?.querySelector('.eda-menu-list');
+ if(!source)return;
+ const popup=document.createElement('div');
+ popup.className='eda-home-floating-menu';
+ popup.setAttribute('role','menu');
+ popup.setAttribute('aria-label',trigger.getAttribute('aria-label')||'Upcoming actions');
+ popup.innerHTML=source.innerHTML;
+ popup.querySelectorAll('button').forEach(b=>{b.setAttribute('role','menuitem');b.type='button';});
+ document.body.appendChild(popup);
+ const anchor=trigger.getBoundingClientRect();
+ const size=popup.getBoundingClientRect();
+ const left=Math.max(8,Math.min(window.innerWidth-size.width-8,anchor.right-size.width));
+ const below=window.innerHeight-anchor.bottom-8;
+ const above=anchor.top-8;
+ const top=below>=Math.min(size.height,300)||below>=above
+    ?Math.min(window.innerHeight-size.height-8,anchor.bottom+5)
+    :Math.max(8,anchor.top-size.height-5);
+ popup.style.left=left+'px';popup.style.top=Math.max(8,top)+'px';
+ trigger.setAttribute('aria-expanded','true');
+ edaOpenHomeMenu={trigger,popup};
+},true);
 document.addEventListener('toggle',event=>{
  const d=event.target;
  if(!(d instanceof HTMLDetailsElement)||!d.matches('.eda-home details.eda-menu'))return;
@@ -2246,7 +2340,7 @@ function edaHomeUpcoming(){
  const cats=['All Activities','Task','Meeting','Follow-up','CRM','Gmail','MOM','Approval','Travel','Event','Vendor','Note','Memory','Daily Plan','Reports / MIS'];
  const buckets=['All','Today','Tomorrow','This Week','This Month','Next Month','Overdue'];
  const filterButton=(f)=>`<button data-action="eda-home-filter" data-id="${esc(f)}" class="${ui.edaHomeFilter===f?'active':''}">${esc(f)}</button>`;
- return `<section class="v11-card eda-panel eda-upcoming"><div class="eda-panel-heading"><h2>${icon('calendar')} Upcoming</h2><div class="eda-month-controls"><button data-action="eda-home-prev-month" aria-label="Previous month">‹</button><strong>${esc(monthLabel)}</strong><button data-action="eda-home-next-month" aria-label="Next month">›</button><label class="eda-date-pick" aria-label="Select date">${icon('calendar')}<input type="date" id="eda-home-date" aria-label="Select Upcoming date" value="${esc(ui.edaHomeSelectedDate||'')}"></label></div></div><div class="eda-filter-scroll" role="group" aria-label="Upcoming date filters">${buckets.map(filterButton).join('')}</div><div class="eda-upcoming-controls"><label>${icon('folder')} <select id="eda-home-category" aria-label="Filter source">${cats.map(c=>`<option ${ui.edaHomeCategory===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><div class="eda-prio-scroll" role="group" aria-label="Priority filters">${['All','High','Normal','Low'].map(p=>`<button data-action="eda-home-priority" data-id="${p}" class="${ui.edaHomePriority===p?'active':''}">${p}</button>`).join('')}</div></div><div class="eda-upcoming-count">${filtered.length} matching activities${ui.edaHomeFilter==='All'?' · '+esc(monthLabel):''}</div><div class="eda-upcoming-list">${filtered.slice(0,ui.edaHomeLimit).map(r=>`<div class="eda-upcoming-row"><span class="eda-source-indicator eda-src-${esc(r.category.toLowerCase().replace(/[^a-z]/g,''))}"></span>${['Tasks','Follow-ups','Daily Plan'].includes(r.type)?`<input class="check" type="checkbox" data-action="${r.type==='Tasks'?'toggle-task':r.type==='Follow-ups'?'follow-done':'home-day-toggle'}" data-id="${esc(r.id)}" aria-label="Mark ${esc(r.title)} Done">`:''}<button class="eda-upcoming-title" data-action="open-record" data-type="${esc(r.type)}" data-id="${esc(r.id)}"><b>${esc(r.title)}</b><small>${esc(v11DateLabel(r.day))} · ${esc(r.time)} · ${esc(r.category)}</small></button><span class="eda-category-tag">${esc(r.category)}</span><span class="eda-priority eda-priority-${r.priority.toLowerCase()}">${esc(r.priority)}</span>${edaHomeRecordMenu(r)}</div>`).join('')||'<p class="eda-empty">Nothing scheduled for these filters. Your saved records are unchanged.</p>'}</div>${filtered.length>ui.edaHomeLimit?`<button class="eda-view-extra" data-action="eda-home-expand">View ${filtered.length-ui.edaHomeLimit} more →</button>`:ui.edaHomeLimit>5?`<button class="eda-view-extra" data-action="eda-home-collapse">Show less ↑</button>`:''}</section>`;
+ return `<section class="v11-card eda-panel eda-upcoming"><div class="eda-panel-heading"><h2>${icon('calendar')} Upcoming</h2><div class="eda-month-controls"><button data-action="eda-home-prev-month" aria-label="Previous month">‹</button><strong>${esc(monthLabel)}</strong><button data-action="eda-home-next-month" aria-label="Next month">›</button><label class="eda-date-pick" aria-label="Select date">${icon('calendar')}<input type="date" id="eda-home-date" aria-label="Select Upcoming date" value="${esc(ui.edaHomeSelectedDate||'')}"></label></div></div><div class="eda-filter-scroll" role="group" aria-label="Upcoming date filters">${buckets.map(filterButton).join('')}</div><div class="eda-upcoming-controls"><label>${icon('folder')} <select id="eda-home-category" aria-label="Filter source">${cats.map(c=>`<option ${ui.edaHomeCategory===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><div class="eda-prio-scroll" role="group" aria-label="Priority filters">${['All','High','Normal','Low'].map(p=>`<button data-action="eda-home-priority" data-id="${p}" class="${ui.edaHomePriority===p?'active':''}">${p}</button>`).join('')}</div></div><div class="eda-upcoming-count">${filtered.length} matching activities${ui.edaHomeFilter==='All'?' · '+esc(monthLabel):''}</div><div class="eda-upcoming-list">${filtered.slice(0,ui.edaHomeLimit).map(r=>`<div class="eda-upcoming-row"><span class="eda-source-indicator eda-src-${esc(r.category.toLowerCase().replace(/[^a-z]/g,''))}"></span>${['Tasks','Follow-ups','Daily Plan'].includes(r.type)?`<input class="check" type="checkbox" data-action="${r.type==='Tasks'?'toggle-task':r.type==='Follow-ups'?'follow-done':'home-day-toggle'}" data-id="${esc(r.id)}" aria-label="Mark ${esc(r.title)} Done">`:'<span class="eda-upcoming-check-placeholder" aria-hidden="true"></span>'}<button class="eda-upcoming-title" data-action="open-record" data-type="${esc(r.type)}" data-id="${esc(r.id)}"><b>${esc(r.title)}</b><small>${esc(v11DateLabel(r.day))} · ${esc(r.time)} · ${esc(r.category)}</small></button><span class="eda-category-tag">${esc(r.category)}</span><span class="eda-priority eda-priority-${r.priority.toLowerCase()}">${esc(r.priority)}</span>${edaHomeRecordMenu(r)}</div>`).join('')||'<p class="eda-empty">Nothing scheduled for these filters. Your saved records are unchanged.</p>'}</div>${filtered.length>ui.edaHomeLimit?`<button class="eda-view-extra" data-action="eda-home-expand">View ${filtered.length-ui.edaHomeLimit} more →</button>`:ui.edaHomeLimit>5?`<button class="eda-view-extra" data-action="eda-home-collapse">Show less ↑</button>`:''}</section>`;
 }
 function edaHomeNotes(){
  const notes=(data.quickNotes||[]).filter(n=>!n.archivedAt).slice().sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)).slice(0,2);
@@ -2708,7 +2802,7 @@ document.addEventListener('submit',e=>{
  ui.memoryEditId=null;ui.modal=null;ui.selectedRecord=null;save();render();toast(old?'Memory updated.':'Memory saved to Executive Memory.');
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.mobilePlannerPanel){ui.mobilePlannerPanel=null;render();return}if(e.key==='Escape'&&(ui.notifOpen||ui.selectedRecord)){ui.notifOpen=false;ui.selectedRecord=null;render()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();nav('Search');document.querySelector('#globalSearch')?.focus()}});
-</script><script src="./eda-upgrades.js?v=20261114-fix3"></script>
+</script><script src="./eda-upgrades.js?v=20261114-upcoming-action-button-5"></script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1' || location.hostname==='[::1]')) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
