@@ -20,6 +20,9 @@ import secrets
 import uuid
 from datetime import datetime, timezone, timedelta
 from email.message import EmailMessage
+from concurrent.futures import ThreadPoolExecutor
+import html
+import re
 from urllib.parse import urlencode
 
 import httpx
@@ -33,7 +36,8 @@ CALENDAR_BASE = 'https://www.googleapis.com/calendar/v3'
 GMAIL_BASE = 'https://gmail.googleapis.com/gmail/v1'
 SCOPES = ('openid email profile '
           'https://www.googleapis.com/auth/calendar '
-          'https://www.googleapis.com/auth/gmail.compose')
+          'https://www.googleapis.com/auth/gmail.compose '
+          'https://www.googleapis.com/auth/gmail.modify')
 STATE_TTL_MINUTES = 15
 
 
@@ -298,3 +302,134 @@ def update_draft(access_token: str, draft_id: str, to: str, subject: str, body: 
     if r.status_code != 200:
         _raise_from(r, 'Gmail draft update')
     return r.json()
+
+# --------------------------------------------------------------------------- #
+# Gmail REST (v1) — read, compose, send and mark read/unread.
+# All message bodies are returned as PLAIN text; do not render email HTML.
+# --------------------------------------------------------------------------- #
+
+def _gmail_request(token: str, method: str, route: str, *, params=None, payload=None) -> dict:
+    with httpx.Client(timeout=25) as client:
+        r = client.request(method, f'{GMAIL_BASE}/users/me/{route}',
+                           headers={'Authorization': 'Bearer '+token},
+                           params=params, json=payload)
+    if r.status_code not in (200,201,204):
+        _raise_from(r, 'Gmail '+route.split('/')[0])
+    return r.json() if r.content else {}
+
+
+def _mime_text(part: dict) -> str:
+    """Prefer text/plain. HTML fallback becomes inert plain text."""
+    typ = part.get('mimeType', '')
+    raw = ((part.get('body') or {}).get('data') or '')
+    if raw and typ.startswith('text/plain'):
+        try:
+            return base64.urlsafe_b64decode(raw + '='*(-len(raw)%4)).decode('utf-8', errors='replace')[:150000]
+        except Exception:
+            return ''
+    parts = part.get('parts') or []
+    for p in parts:
+        text = _mime_text(p)
+        if text:
+            return text
+    if typ.startswith('text/html') and raw:
+        try:
+            source = base64.urlsafe_b64decode(raw + '='*(-len(raw)%4)).decode('utf-8', errors='replace')
+            source = re.sub(r'(?is)<(script|style)[^>]*>.*?</\1>', '', source)
+            source = re.sub(r'(?i)<br\s*/?>|</(p|div|li)>', '\n', source)
+            return html.unescape(re.sub(r'<[^>]*>', ' ', source))[:150000]
+        except Exception:
+            return ''
+    if raw and typ in ('', 'text/plain'):
+        try:
+            return base64.urlsafe_b64decode(raw+'='*(-len(raw)%4)).decode('utf-8', errors='replace')[:150000]
+        except Exception:
+            return ''
+    return ''
+
+
+def _slim_message(raw: dict, include_body: bool=False) -> dict:
+    hd = {}
+    for x in (raw.get('payload') or {}).get('headers') or []:
+        name = str(x.get('name') or '').lower()
+        if name in ('from','to','cc','subject','date','reply-to','message-id','references'):
+            hd[{'reply-to':'replyTo','message-id':'messageId'}.get(name,name)] = x.get('value') or ''
+    return {
+        'id':raw.get('id'), 'threadId':raw.get('threadId'),
+        'labelIds':raw.get('labelIds') or [], 'snippet':str(raw.get('snippet') or '')[:600],
+        'internalDate':int(raw.get('internalDate') or 0),
+        'headers':hd, 'bodyText':_mime_text(raw.get('payload') or {}) if include_body else '',
+    }
+
+
+def list_messages(token: str, label: str='INBOX', max_results: int=20,
+                  page_token: str='', query: str='') -> dict:
+    params = {'maxResults':max(1,min(30,int(max_results)))}
+    if label in ('INBOX','SENT','DRAFT','TRASH','UNREAD'):
+        params['labelIds'] = label if label != 'UNREAD' else 'INBOX'
+    if page_token:
+        params['pageToken'] = page_token
+    if query:
+        params['q'] = query[:300]
+    response = _gmail_request(token,'GET','messages',params=params)
+    refs = response.get('messages') or []
+    def one(item):
+        raw = _gmail_request(token,'GET','messages/'+item['id'],params={'format':'metadata',
+            'metadataHeaders':['From','To','Cc','Subject','Date','Reply-To','Message-ID']})
+        return _slim_message(raw)
+    # Concurrent metadata retrieval avoids N sequential Google round trips.
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        messages = list(pool.map(one, refs))
+    return {'messages':messages,'next_page_token':response.get('nextPageToken') or ''}
+
+
+def get_message(token: str, message_id: str) -> dict:
+    raw = _gmail_request(token,'GET','messages/'+message_id,params={'format':'full'})
+    return _slim_message(raw, include_body=True)
+
+
+def set_message_read(token: str, message_id: str, read: bool) -> dict:
+    payload = {'removeLabelIds':['UNREAD']} if read else {'addLabelIds':['UNREAD']}
+    raw = _gmail_request(token,'POST','messages/'+message_id+'/modify',payload=payload)
+    return {'id':raw.get('id',message_id),'labelIds':raw.get('labelIds') or []}
+
+
+def _compose_raw(to: str, subject: str, body: str, cc: str='', bcc: str='',
+                 in_reply_to: str='', attachments: list | None=None) -> str:
+    msg=EmailMessage()
+    msg['To']=to
+    if cc: msg['Cc']=cc
+    if bcc: msg['Bcc']=bcc
+    msg['Subject']=subject
+    if in_reply_to:
+        msg['In-Reply-To']=in_reply_to
+        msg['References']=in_reply_to
+    msg.set_content(body)
+    for item in attachments or []:
+        try:
+            raw=base64.b64decode(item['data'],validate=True)
+            if len(raw)>6_000_000:
+                raise ValueError('Attachment exceeds size limit')
+            mime=(item.get('mime_type') or 'application/octet-stream').split('/',1)
+            maintype,subtype=mime if len(mime)==2 else ('application','octet-stream')
+            msg.add_attachment(raw,maintype=maintype,subtype=subtype,
+                               filename=str(item.get('filename') or 'attachment')[:180])
+        except (ValueError,KeyError) as exc:
+            raise ValueError('Invalid attachment data') from exc
+    return base64.urlsafe_b64encode(msg.as_bytes()).decode('ascii')
+
+
+def send_message(token: str, to: str, subject: str, body: str, cc: str='', bcc: str='',
+                 thread_id: str='', in_reply_to: str='', attachments: list | None=None) -> dict:
+    payload = {'raw':_compose_raw(to,subject,body,cc,bcc,in_reply_to,attachments)}
+    if thread_id: payload['threadId']=thread_id
+    r=_gmail_request(token,'POST','messages/send',payload=payload)
+    return {'message_id':r.get('id'), 'thread_id':r.get('threadId')}
+
+
+def create_rich_draft(token: str, to: str, subject: str, body: str, cc: str='', bcc: str='',
+                      thread_id: str='', in_reply_to: str='', attachments: list | None=None) -> dict:
+    msg={'raw':_compose_raw(to,subject,body,cc,bcc,in_reply_to,attachments)}
+    if thread_id:msg['threadId']=thread_id
+    d=_gmail_request(token,'POST','drafts',payload={'message':msg})
+    return {'draft_id':d.get('id'),'message_id':(d.get('message') or {}).get('id')}

@@ -1,12 +1,12 @@
 // App shell only. Never cache /api responses or private user data.
-const CACHE='executive-desk-v16-fullstack-2';
-const FILES=['./','./index.html','./cloud.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const CACHE='executive-desk-v16-section-upgrades-20261114';
+const FILES=['./','./index.html','./cloud.js','./eda-upgrades.css','./eda-upgrades.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)));self.skipWaiting();});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim();});
 self.addEventListener('fetch',e=>{
  const req=e.request,u=new URL(req.url);
  if(req.method!=='GET'||u.origin!==self.location.origin||u.pathname.startsWith('/api/'))return;
- e.respondWith(fetch(req).then(res=>{if(res.ok&&/\.(?:html|js|webmanifest|png)$/.test(u.pathname)){const c=res.clone();caches.open(CACHE).then(cache=>cache.put(req,c));}return res;}).catch(()=>caches.match(req).then(v=>v||caches.match('./index.html'))));
+ e.respondWith(fetch(req).then(res=>{if(res.ok&&/\.(?:html|js|css|webmanifest|png)$/.test(u.pathname)){const c=res.clone();caches.open(CACHE).then(cache=>cache.put(req,c));}return res;}).catch(()=>caches.match(req).then(v=>v||caches.match('./index.html'))));
 });
 
 // Background Web Push (RFC 8291). Payload is JSON: {title, body, url, tag}.

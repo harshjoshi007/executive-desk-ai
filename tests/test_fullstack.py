@@ -189,10 +189,15 @@ def test_push_reminders_cover_dated_records_including_tentative_events():
         ],
     }
 
-    reminders=pending_reminders(payload,now=now,leads=[0])
-
-    assert {item['kind'] for item in reminders}=={'task','meeting','tentative','followup'}
-    assert len([item for item in reminders if item['kind']=='task'])==2
+    # Date-only tasks and tentative events are status cards, not timed
+    # notifications with invented 09:00 starts. The timed categories are real.
+    from backend.push import inbox_notifications
+    reminders=pending_reminders(payload,now=now)
+    assert {item['kind'] for item in reminders}=={'task','meeting','followup'}
+    assert len([item for item in reminders if item['kind']=='task'])==1
+    status=inbox_notifications(payload,now=now)
+    assert any(item['title']=='Tentative event today' for item in status)
+    assert len([item for item in status if item['title']=='Task due today'])==2
 
 
 def test_whatsapp_number_normalization():
@@ -229,15 +234,17 @@ def test_whatsapp_reminder_pass_sends_every_kind_once(tmp_path,monkeypatch):
         # A second tick in the same window must not resend (deduplicated).
         second=whatsapp.run_pass(db,now)
         settings=whatsapp.get_settings(db,user_id)
-    # Four timed lead-time reminders plus the inbox status cards for the same day.
-    assert first==7
+    # Timed, status-card and daily-briefing notifications are all delivered.
+    assert first==8
     assert second==0
-    assert len(delivered)==7
+    assert len(delivered)==8
     assert {heading for heading,_ in delivered}=={
         'Executive Desk AI · Task reminder','Executive Desk AI · Meeting reminder',
-        'Executive Desk AI · Tentative event reminder','Executive Desk AI · Follow-up reminder',
+        'Executive Desk AI · Follow-up reminder',
         'Executive Desk AI · Task due today','Executive Desk AI · Meeting starting soon',
-        'Executive Desk AI · Follow-up due today'}
+        'Executive Desk AI · Follow-up due today',
+        'Executive Desk AI · Tentative event today',
+        'Executive Desk AI · Morning briefing'}
     bodies=' '.join(text for _,text in delivered)
     for title in ('Sign documents','Client meeting','Tentative interview','Confirm KYC'):
         assert title in bodies

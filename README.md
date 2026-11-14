@@ -1,4 +1,7 @@
-# Executive Desk AI — Full Working Project (V16)
+# Executive Desk AI — Integrated V16 Project
+
+**New-repository deployment:** Start with [`START_HERE_GITHUB_VERCEL.md`](START_HERE_GITHUB_VERCEL.md) for the integrated source and minimal deployment steps. This version includes the approved section updates and preserves existing Daily Plan/Memory source code.
+
 
 This is **source code for a running web application**, not a standalone/static `index.html`. It includes the V15 desktop/iPhone/Android interface **and** a Python API server, private login, persistent SQLite database, revision-checked cross-device saving, backups, tests and PWA files.
 
@@ -81,13 +84,13 @@ Vercel runs the app as a serverless function: there is no persistent disk, so th
 
 These run against live services once you supply credentials in `.env` — nothing is simulated:
 
-- **Google Sign-In, two-way Google Calendar sync and Gmail drafts** (see `.env.example` → `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`).
+- **Google Sign-In, configurable Google Calendar sync, and Gmail reading/sending/drafts** (see `.env.example` → `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`); enable the required Google APIs and permissions and verify live integration before relying on it.
 - **Web Push background notifications** (VAPID keys; per-device subscriptions).
 - **WhatsApp reminders** via the official WhatsApp Business Cloud API (see below).
 
 ### Not yet connected to external services
 
-**OpenAI-powered responses, automatic Google Meet link generation and Gmail retrieval/sending are NOT active.** Smart Capture uses on-device instruction matching, and Ask Executive AI uses saved-record matching, **not a live AI model**. These need separate credentials and end-to-end testing.
+**OpenAI-powered responses and automatic Google Meet link generation are NOT active.** Smart Capture uses on-device instruction matching, and Ask Executive AI uses saved-record matching, **not a live AI model**. Gmail Inbox, sending, and draft API endpoints and UI have been added in this integrated version; real Gmail functionality requires OAuth permissions and end-to-end testing with your Google account.
 
 ## WhatsApp reminders
 

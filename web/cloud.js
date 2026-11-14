@@ -79,6 +79,26 @@ async function calendarUpdate(id,ev){const r=await request('google/calendar/even
 async function calendarDelete(id){return request('google/calendar/events/'+encodeURIComponent(id),{method:'DELETE'});}
 async function gmailDraft(d){return request('google/gmail/draft',{method:'POST',body:JSON.stringify(d)});}
 
+/* -------------- Gmail Inbox, Send and per-message read status -------------- */
+async function gmailList({label='INBOX',max_results=20,page_token='',query=''}={}){
+ const q=new URLSearchParams({label,max_results:String(max_results),page_token,query});
+ return request('google/gmail/messages?'+q.toString());
+}
+async function gmailGet(id){return request('google/gmail/messages/'+encodeURIComponent(id));}
+async function gmailSetRead(id,read){return request('google/gmail/messages/'+encodeURIComponent(id)+'/read',
+ {method:'POST',body:JSON.stringify({read:!!read})});}
+async function gmailSend(payload){return request('google/gmail/send',
+ {method:'POST',body:JSON.stringify(payload)});}
+async function gmailSaveDraft(payload){return request('google/gmail/drafts/rich',
+ {method:'POST',body:JSON.stringify(payload)});}
+async function exportPdf(payload){
+ if(!s.ready)throw new Error('Sign in before exporting');
+ const r=await fetch('/api/exports/pdf',{method:'POST',credentials:'same-origin',cache:'no-store',
+  headers:{'Content-Type':'application/json','X-EDA-CSRF':s.csrf},body:JSON.stringify(payload)});
+ if(!r.ok){let problem={};try{problem=await r.json()}catch{}throw new Error(problem.detail||'PDF export failed ('+r.status+')')}
+ return {blob:await r.blob()};
+}
+
 /* -------------------------------- WhatsApp -------------------------------- */
 async function refreshWhatsApp(){try{const w=await request('whatsapp/status');const changed=JSON.stringify(w)!==JSON.stringify(s.whatsapp);s.whatsapp=w;if(changed&&s.ready)window.render?.();return w;}catch(e){return s.whatsapp;}}
 async function whatsappSave(number,enabled){const r=await request('whatsapp/set',{method:'POST',body:JSON.stringify({phone_number:number,enabled:!!enabled})});await refreshWhatsApp();return r;}
@@ -140,6 +160,7 @@ async function init(){wire();captureGoogleError();await checkGoogleAvailable();a
 window.edaCloud={active:true, gateHTML:loginHTML,panelHTML,label,save,init,rawState:s,
  googleState:()=>s.google, refreshGoogle, googleStart, googleDisconnect,
  calendarList, calendarCreate, calendarUpdate, calendarDelete, gmailDraft,
+ gmailList, gmailGet, gmailSetRead, gmailSend, gmailSaveDraft, exportPdf,
  whatsappState:()=>s.whatsapp, refreshWhatsApp, whatsappSave, whatsappDisable, whatsappTest,
  emailState:()=>s.email, refreshEmail, emailTest,
  pushEnable, pushDisable, pushTest, pushSupported, notifPermission, inAppNotify};

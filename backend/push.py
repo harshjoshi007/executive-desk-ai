@@ -46,7 +46,7 @@ LEAD_PROFILES = {
     'crm':        (1440, 0),                    # CRM
     'approval':   (1440, 0),                    # Approvals
     'mis':        (1440, 0),                    # MIS
-    'note':       (),                           # Notes & Memory (explicit only)
+    'note':       (0,),                         # Notes: explicit scheduled times
 }
 # A reminder whose moment has already arrived within this many minutes still fires
 # once (so a brief server restart does not silently lose a notification).
@@ -397,6 +397,18 @@ def pending_reminders(payload: dict, now: datetime | None = None,
         emit('followup', follow.get('id'), when, 'Follow-up reminder', body,
              'followup', critical=(when < now))
 
+    # Explicit note reminders with a real clock time; Upcoming alone does not notify.
+    for note in payload.get('quickNotes', []) or []:
+        if not note.get('reminderEnabled') or note.get('archivedAt'):
+            continue
+        date_str = str(note.get('reminderDate') or note.get('remindOn') or '').strip()
+        time_str = str(note.get('reminderTime') or '').strip()
+        if not (date_str and time_str):
+            continue
+        when = _ist_datetime(date_str, time_str)
+        emit('note', note.get('id'), when, 'Note reminder',
+             note.get('title') or (note.get('body') or 'Note')[:80], 'note')
+
     for day, journal in (payload.get('dailyJournals') or {}).items():
         for entry in ((journal or {}).get('entries') or []):
             if not isinstance(entry, dict) or entry.get('status') == 'Completed' \
@@ -543,6 +555,16 @@ def inbox_notifications(payload: dict, now: datetime | None = None) -> list:
         detail = f"{date_str} · {trip.get('city') or 'Destination to confirm'}"
         add(f"trip:{trip.get('id')}:{days}", _day_label(days, 'Travel'), trip.get('title') or 'Trip', detail)
 
+    # A trip may have an explicitly chosen custom reminder date.
+    for trip in payload.get('trips', []) or []:
+        if trip.get('status') in ('Completed', 'Cancelled'):
+            continue
+        reminder_day = str(trip.get('remindOn') or '').strip()
+        if reminder_day != today:
+            continue
+        add(f"trip-custom:{trip.get('id')}", 'Travel reminder',
+            trip.get('title') or 'Trip', reminder_day)
+
     # Events — date-only; alerts 7 / 3 / 1 days before plus the day itself.
     for event in payload.get('events', []) or []:
         if event.get('status') in ('Completed', 'Cancelled'):
@@ -577,6 +599,21 @@ def inbox_notifications(payload: dict, now: datetime | None = None) -> list:
         add(f"mom:{mom.get('id')}:{days}", _day_label(days, 'MOM deadline'),
             mom.get('meetingTitle') or 'Meeting minutes', detail)
 
+    # Structured MOM action-point deadlines (separate from old single deadline).
+    for mom in payload.get('meetingNotes', []) or []:
+        if mom.get('draft') or mom.get('archivedAt'):
+            continue
+        for action in mom.get('actionItems', []) or []:
+            if not isinstance(action, dict) or action.get('status') in ('Completed', 'Cancelled'):
+                continue
+            due = str(action.get('dueDate') or '').strip()
+            days = _days_until(due, today)
+            if days is None or days < 0 or days not in _day_offsets(payload, 'mom'):
+                continue
+            detail = f"{action.get('owner') or 'Owner not assigned'} · {due}"
+            add(f"mom-action:{mom.get('id')}:{action.get('id')}:{days}",
+                _day_label(days, 'MOM action'), action.get('title') or 'Action point', detail)
+
     # CRM — next action date, alerted the day before and on the day.
     for client in payload.get('clients', []) or []:
         date_str = str(client.get('next') or '').strip()
@@ -587,9 +624,11 @@ def inbox_notifications(payload: dict, now: datetime | None = None) -> list:
         add(f"crm:{client.get('id')}:{days}", _day_label(days, 'Client action'),
             client.get('name') or 'Client', detail)
 
-    # Notes — only when a reminder date is explicitly set.
+    # Date-only note reminders; timed notes are handled by pending_reminders.
     for note in payload.get('quickNotes', []) or []:
-        date_str = str(note.get('remindOn') or '').strip()
+        if note.get('reminderEnabled') is False or note.get('archivedAt') or note.get('reminderTime'):
+            continue
+        date_str = str(note.get('reminderDate') or note.get('remindOn') or '').strip()
         days = _days_until(date_str, today)
         if days is None or days < 0 or days not in _day_offsets(payload, 'note'):
             continue

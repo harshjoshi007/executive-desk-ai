@@ -7,6 +7,10 @@ import secrets
 import time
 import asyncio
 import contextlib
+import io
+import re
+from datetime import date, timedelta
+from xml.sax.saxutils import escape as xml_escape
 from collections import defaultdict, deque
 from contextlib import contextmanager, asynccontextmanager
 from pathlib import Path
@@ -59,6 +63,29 @@ class GmailDraft(BaseModel):
     subject: str = Field(min_length=1, max_length=998)
     body: str = Field(default='', max_length=100000)
     draft_id: str = Field(default='', max_length=200)
+
+class GmailAttachment(BaseModel):
+    filename: str = Field(min_length=1,max_length=180)
+    mime_type: str = Field(default='application/octet-stream',max_length=120)
+    data: str = Field(min_length=1,max_length=8_100_000)
+
+class GmailCompose(BaseModel):
+    to: str = Field(min_length=3, max_length=1000)
+    cc: str = Field(default='', max_length=1000)
+    bcc: str = Field(default='', max_length=1000)
+    subject: str = Field(min_length=1, max_length=998)
+    body: str = Field(min_length=1, max_length=150000)
+    thread_id: str = Field(default='', max_length=200)
+    in_reply_to: str = Field(default='', max_length=300)
+    attachments: list[GmailAttachment] = Field(default_factory=list,max_length=5)
+
+class GmailRead(BaseModel):
+    read: bool
+
+class PDFExport(BaseModel):
+    kind: str
+    record: dict[str,Any]
+
 
 class WhatsAppSettings(BaseModel):
     phone_number: str = Field(default='', max_length=32)
@@ -295,7 +322,9 @@ def create_app(db_path=None):
         return {'configured':gi.configured(), 'connected':bool(account),
                 'email':account['email'] if account else None,
                 'calendar_scope':bool(account and 'calendar' in (account['scope'] or '')),
-                'gmail_scope':bool(account and 'gmail' in (account['scope'] or '')),
+                'gmail_scope':bool(account and ('gmail.compose' in (account['scope'] or '') or 'gmail.modify' in (account['scope'] or ''))),
+                'gmail_read_scope':bool(account and ('gmail.readonly' in (account['scope'] or '') or 'gmail.modify' in (account['scope'] or ''))),
+                'gmail_modify_scope':bool(account and 'gmail.modify' in (account['scope'] or '')),
                 'push_ready':push.ready(),
                 'push_public_key':push.public_key() if push.ready() else None,
                 'push_devices':devices}
@@ -309,7 +338,7 @@ def create_app(db_path=None):
 
     def _event_body(body:CalendarEvent) -> dict:
         if body.all_day:
-            event = {'summary':body.title, 'start':{'date':body.start[:10]}, 'end':{'date':(body.end or body.start)[:10]}}
+            event = {'summary':body.title, 'start':{'date':body.start[:10]}, 'end':{'date':(body.end or (date.fromisoformat(body.start[:10])+timedelta(days=1)).isoformat())[:10]}}
         else:
             event = {'summary':body.title,
                      'start':{'dateTime':body.start, 'timeZone':'Asia/Kolkata'},
@@ -323,7 +352,8 @@ def create_app(db_path=None):
         return {'id':event.get('id'), 'htmlLink':event.get('htmlLink'), 'title':event.get('summary') or '(No title)',
                 'start':start.get('dateTime') or start.get('date'), 'end':end.get('dateTime') or end.get('date'),
                 'location':event.get('location') or '', 'description':event.get('description') or '',
-                'all_day':bool(start.get('date')), 'status':event.get('status')}
+                'all_day':bool(start.get('date')), 'status':event.get('status'),
+                'hangoutLink':event.get('hangoutLink') or ''}
 
     @app.get('/api/google/calendar/events')
     def calendar_list(request:Request, time_min:str='', time_max:str=''):
@@ -369,6 +399,136 @@ def create_app(db_path=None):
         else:
             draft = gi.create_draft(token, body.to, body.subject, body.body)
         return {'draft_id':draft.get('id'), 'message_id':(draft.get('message') or {}).get('id')}
+
+    # -------------------------------------------------------- Gmail workspace --
+    def _gmail_token(request:Request, *, write:bool=False, sending:bool=False):
+        me=require_user(request,change=write)
+        with get_db() as db:
+            account=gi.get_account(db,me['id'])
+            scope=(account['scope'] or '') if account else ''
+            if not account:
+                raise HTTPException(409,'Google account is not connected.')
+            if sending:
+                allowed='gmail.compose' in scope or 'gmail.modify' in scope
+            elif write:
+                allowed='gmail.modify' in scope
+            else:
+                allowed='gmail.readonly' in scope or 'gmail.modify' in scope
+            if not allowed:
+                raise HTTPException(403, 'Required Gmail permission is missing. Reconnect Google and approve access.')
+            return gi.valid_access_token(db,me['id'])
+
+    def _gmail_id(value: str) -> str:
+        if not re.fullmatch(r'[a-zA-Z0-9_-]{1,200}',value):
+            raise HTTPException(422,'Invalid Gmail message ID')
+        return value
+
+    @app.get('/api/google/gmail/messages')
+    def gmail_list(request:Request,label:str='INBOX',max_results:int=20,page_token:str='',query:str=''):
+        token=_gmail_token(request)
+        if label not in ('INBOX','UNREAD','SENT','DRAFT','TRASH'):
+            raise HTTPException(422,'Invalid Gmail folder')
+        return gi.list_messages(token,label,max_results,page_token,query)
+
+    @app.get('/api/google/gmail/messages/{message_id}')
+    def gmail_get(message_id:str,request:Request):
+        return gi.get_message(_gmail_token(request),_gmail_id(message_id))
+
+    @app.post('/api/google/gmail/messages/{message_id}/read')
+    def gmail_read(message_id:str,body:GmailRead,request:Request):
+        return gi.set_message_read(_gmail_token(request,write=True),_gmail_id(message_id),body.read)
+
+    @app.post('/api/google/gmail/send')
+    def gmail_send(body:GmailCompose,request:Request):
+        token=_gmail_token(request,write=True,sending=True)
+        if sum(len(a.data) for a in body.attachments)>8_100_000:
+            raise HTTPException(413,'Total attachment payload exceeds 6 MB')
+        try:
+            return gi.send_message(token,body.to,body.subject,body.body,body.cc,body.bcc,
+                                   body.thread_id,body.in_reply_to,
+                                   [a.model_dump() for a in body.attachments])
+        except (TypeError,ValueError) as exc:
+            raise HTTPException(422,'Invalid email header or recipient') from exc
+
+    @app.post('/api/google/gmail/drafts/rich')
+    def gmail_create_rich_draft(body:GmailCompose,request:Request):
+        token=_gmail_token(request,write=True,sending=True)
+        if sum(len(a.data) for a in body.attachments)>8_100_000:
+            raise HTTPException(413,'Total attachment payload exceeds 6 MB')
+        try:
+            return gi.create_rich_draft(token,body.to,body.subject,body.body,
+                                        body.cc,body.bcc,body.thread_id,body.in_reply_to,
+                                        [a.model_dump() for a in body.attachments])
+        except (TypeError,ValueError) as exc:
+            raise HTTPException(422,'Invalid email header or recipient') from exc
+
+    # ---------------------------------------------------------- PDF exports --
+    @app.post('/api/exports/pdf')
+    def export_pdf(body:PDFExport,request:Request):
+        require_user(request,change=True)
+        if body.kind not in ('mom','travel'):
+            raise HTTPException(422,'Unsupported PDF type')
+        # The PDF contains only user-submitted content from their signed-in workspace.
+        # This route does not change or publish any saved records.
+        if len(json.dumps(body.record,ensure_ascii=False))>220000:
+            raise HTTPException(413,'Document is too long for one export')
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import getSampleStyleSheet
+        from reportlab.lib.enums import TA_LEFT
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, KeepTogether
+        from reportlab.lib import colors
+        from reportlab.lib.styles import ParagraphStyle
+        from reportlab.lib.units import mm
+        record=body.record
+        buff=io.BytesIO()
+        doc=SimpleDocTemplate(buff,pagesize=A4,rightMargin=18*mm,leftMargin=18*mm,
+            topMargin=18*mm,bottomMargin=18*mm,title='Executive Desk AI')
+        styles=getSampleStyleSheet()
+        body_style=ParagraphStyle('EDA_Body',parent=styles['BodyText'],fontName='Helvetica',
+                fontSize=9.5,leading=15,spaceAfter=7,wordWrap='CJK')
+        head_style=ParagraphStyle('EDA_Head',parent=styles['Heading2'],textColor=colors.HexColor('#b94164'),spaceBefore=14)
+        story=[Paragraph('EXECUTIVE DESK AI',styles['Heading3']),Spacer(1,7)]
+        def line(label,value):
+            if value is None or value=='':return
+            text=xml_escape(str(value)).replace('\n','<br/>')
+            story.append(Paragraph('<b>'+xml_escape(label)+':</b> '+text,body_style))
+        def block(label,value):
+            if value is None or value=='':return
+            story.append(Paragraph(xml_escape(label),head_style))
+            line('',value)
+        if body.kind=='mom':
+            story.append(Paragraph(xml_escape(str(record.get('meetingTitle') or 'Minutes of Meeting')),styles['Title']))
+            line('Date',record.get('discussionDate') or record.get('date'))
+            line('Time',record.get('discussionTime'))
+            line('Attendees',record.get('attendees'))
+            block('Discussion / Exact Notes',record.get('notes'))
+            block('Decisions / Outcomes',record.get('decisions'))
+            acts=record.get('actionItems') or record.get('actions') or []
+            if acts:
+                story.append(Paragraph('Action Points',head_style))
+                for i,a in enumerate(acts,1):
+                    if isinstance(a,dict):
+                        desc=str(a.get('title') or '')
+                        extra=' | '.join(str(a.get(x) or '') for x in ('owner','dueDate','priority') if a.get(x))
+                    else:desc=str(a);extra=''
+                    line(str(i),desc+(' — '+extra if extra else ''))
+        else:
+            story.append(Paragraph(xml_escape(str(record.get('title') or 'Trip Itinerary')),styles['Title']))
+            for key,label in [('travellers','Traveller(s)'),('city','Destination'),('country','Country'),('start','Departure'),('end','Return'),('status','Status')]:
+                line(label,record.get(key))
+            for key,label in [('legs','Transport Bookings'),('hotels','Accommodation'),('groundTransport','Ground Transport')]:
+                arr=record.get(key) or []
+                if arr:
+                    story.append(Paragraph(label,head_style))
+                    for i,a in enumerate(arr,1):
+                        line(str(i),' | '.join(str(v) for k,v in a.items() if k!='id' and v))
+            block('Agenda',record.get('agenda'))
+            block('Notes',record.get('notes'))
+        if not story:story=[Paragraph('No document content',body_style)]
+        doc.build(story)
+        return Response(content=buff.getvalue(),media_type='application/pdf',
+            headers={'Content-Disposition':'attachment; filename="executive-desk-export.pdf"',
+                     'Cache-Control':'private, no-store'})
 
     # ------------------------------------------------------------------ Push --
     @app.get('/api/push/key')
