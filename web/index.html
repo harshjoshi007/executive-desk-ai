@@ -2378,7 +2378,7 @@ function edaHomeUpcoming(){
  const cats=['All Activities','Task','Meeting','Follow-up','CRM','Gmail','MOM','Approval','Travel','Event','Vendor','Note','Memory','Daily Plan','Reports / MIS'];
  const buckets=['All','Today','Tomorrow','This Week','This Month','Next Month','Overdue'];
  const filterButton=(f)=>`<button data-action="eda-home-filter" data-id="${esc(f)}" class="${ui.edaHomeFilter===f?'active':''}">${esc(f)}</button>`;
- return `<section class="v11-card eda-panel eda-upcoming"><div class="eda-panel-heading"><h2>${icon('calendar')} Upcoming</h2><div class="eda-month-controls"><button data-action="eda-home-prev-month" aria-label="Previous month">‹</button><strong>${esc(monthLabel)}</strong><button data-action="eda-home-next-month" aria-label="Next month">›</button><label class="eda-date-pick" aria-label="Select date">${icon('calendar')}<input type="date" id="eda-home-date" aria-label="Select Upcoming date" value="${esc(ui.edaHomeSelectedDate||'')}"></label></div></div><div class="eda-filter-scroll" role="group" aria-label="Upcoming date filters">${buckets.map(filterButton).join('')}</div><div class="eda-upcoming-controls"><label>${icon('folder')} <select id="eda-home-category" aria-label="Filter source">${cats.map(c=>`<option ${ui.edaHomeCategory===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><div class="eda-prio-scroll" role="group" aria-label="Priority filters">${['All','High','Normal','Low'].map(p=>`<button data-action="eda-home-priority" data-id="${p}" class="${ui.edaHomePriority===p?'active':''}">${p}</button>`).join('')}</div></div><div class="eda-upcoming-count">${filtered.length} matching activities${ui.edaHomeFilter==='All'?' · '+esc(monthLabel):''}</div><div class="eda-upcoming-list">${filtered.slice(0,ui.edaHomeLimit).map(r=>`<div class="eda-upcoming-row eda-upcoming-card" style="background:#fff!important;border:2px solid #dce0e8!important;border-radius:14px!important;box-shadow:0 3px 12px rgba(35,40,55,.08)!important;padding:13px 14px!important;margin:0!important;min-height:76px!important;width:100%!important;box-sizing:border-box!important"><span class="eda-source-indicator eda-src-${esc(r.category.toLowerCase().replace(/[^a-z]/g,''))}"></span>${['Tasks','Follow-ups','Daily Plan'].includes(r.type)?`<input class="check" type="checkbox" data-action="${r.type==='Tasks'?'toggle-task':r.type==='Follow-ups'?'follow-done':'home-day-toggle'}" data-id="${esc(r.id)}" aria-label="Mark ${esc(r.title)} Done">`:'<span class="eda-upcoming-check-placeholder" aria-hidden="true"></span>'}<button class="eda-upcoming-title" data-action="open-record" data-type="${esc(r.type)}" data-id="${esc(r.id)}"><b>${esc(r.title)}</b><small>${esc(v11DateLabel(r.day))} · ${esc(r.time)} · ${esc(r.category)}</small></button><span class="eda-category-tag">${esc(r.category)}</span><span class="eda-priority eda-priority-${r.priority.toLowerCase()}">${esc(r.priority)}</span>${edaHomeRecordMenu(r)}</div>`).join('')||'<p class="eda-empty">Nothing scheduled for these filters. Your saved records are unchanged.</p>'}</div>${filtered.length>ui.edaHomeLimit?`<button class="eda-view-extra" data-action="eda-home-expand">View ${filtered.length-ui.edaHomeLimit} more →</button>`:ui.edaHomeLimit>5?`<button class="eda-view-extra" data-action="eda-home-collapse">Show less ↑</button>`:''}</section>`;
+ return `<section class="v11-card eda-panel eda-upcoming"><div class="eda-panel-heading"><h2>${icon('calendar')} Upcoming</h2><div class="eda-month-controls"><button data-action="eda-home-prev-month" aria-label="Previous month">‹</button><strong>${esc(monthLabel)}</strong><button data-action="eda-home-next-month" aria-label="Next month">›</button><label class="eda-date-pick" aria-label="Select date">${icon('calendar')}<input type="date" id="eda-home-date" aria-label="Select Upcoming date" value="${esc(ui.edaHomeSelectedDate||'')}"></label></div></div><div class="eda-filter-scroll" role="group" aria-label="Upcoming date filters">${buckets.map(filterButton).join('')}</div><div class="eda-upcoming-controls"><label>${icon('folder')} <select id="eda-home-category" aria-label="Filter source">${cats.map(c=>`<option ${ui.edaHomeCategory===c?'selected':''}>${esc(c)}</option>`).join('')}</select></label><div class="eda-prio-scroll" role="group" aria-label="Priority filters">${['All','High','Normal','Low'].map(p=>`<button data-action="eda-home-priority" data-id="${p}" class="${ui.edaHomePriority===p?'active':''}">${p}</button>`).join('')}</div></div><div class="eda-upcoming-count">${filtered.length} matching activities${ui.edaHomeFilter==='All'?' · '+esc(monthLabel):''}</div><div class="eda-upcoming-list">${filtered.slice(0,ui.edaHomeLimit).map(r=>`<div class="eda-upcoming-row eda-upcoming-card" style="background:#fff!important;border:2px solid #dce0e8!important;border-radius:14px!important;box-shadow:0 3px 12px rgba(35,40,55,.08)!important;padding:13px 14px!important;margin:0!important;min-height:76px!important;width:100%!important;box-sizing:border-box!important"><span class="eda-source-indicator eda-src-${esc(r.category.toLowerCase().replace(/[^a-z]/g,''))}"></span><input class="check" type="checkbox" data-action="eda-home-check" data-type="${esc(r.type)}" data-day="${esc(r.day)}" data-id="${esc(r.id)}" aria-label="Mark ${esc(r.title)} done"><button class="eda-upcoming-title" data-action="open-record" data-type="${esc(r.type)}" data-id="${esc(r.id)}"><b>${esc(r.title)}</b><small>${esc(v11DateLabel(r.day))} · ${esc(r.time)} · ${esc(r.category)}</small></button><span class="eda-category-tag">${esc(r.category)}</span><span class="eda-priority eda-priority-${r.priority.toLowerCase()}">${esc(r.priority)}</span>${edaHomeRecordMenu(r)}</div>`).join('')||'<p class="eda-empty">Nothing scheduled for these filters. Your saved records are unchanged.</p>'}</div>${filtered.length>ui.edaHomeLimit?`<button class="eda-view-extra" data-action="eda-home-expand">View ${filtered.length-ui.edaHomeLimit} more →</button>`:ui.edaHomeLimit>5?`<button class="eda-view-extra" data-action="eda-home-collapse">Show less ↑</button>`:''}</section>`;
 }
 function edaHomeNotes(){
  const notes=(data.quickNotes||[]).filter(n=>!n.archivedAt).slice().sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)||new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)).slice(0,2);
@@ -2624,6 +2624,36 @@ if(a==='eda-home-prev-month'||a==='eda-home-next-month'){
  const ym=ui.edaHomeMonth||indiaDate().slice(0,7),d=new Date(ym+'-01T12:00:00Z');
  d.setUTCMonth(d.getUTCMonth()+(a==='eda-home-prev-month'?-1:1));
  ui.edaHomeMonth=d.toISOString().slice(0,7);ui.edaHomeFilter='All';ui.edaHomeSelectedDate='';ui.edaHomeLimit=5;render();return;
+}
+// Every Upcoming record has a working completion checkbox, including meetings and Gmail.
+if(a==='eda-home-check'){
+ const type=el.dataset.type,day=el.dataset.day;
+ if(type==='Tasks'){const t=data.tasks.find(x=>String(x.id)===String(id));if(t)v11Status(t.id,'Completed');return;}
+ if(type==='Follow-ups'){
+  const f=data.followups.find(x=>String(x.id)===String(id));if(!f)return;
+  const before=cloneRecord(f);f.status='Completed';f.completedAt=new Date().toISOString();f.updatedAt=f.completedAt;
+  logActivity('Follow-ups',f.id,f.title,'Completed',before,f);persist();return;
+ }
+ if(type==='Meetings'){
+  const m=data.meetings.find(x=>String(x.id)===String(id));if(!m)return;
+  if(!confirm('Confirm this meeting was held/completed?')){el.checked=false;return;}
+  const before=cloneRecord(m);m.status='Completed';m.completedAt=new Date().toISOString();m.updatedAt=m.completedAt;
+  logActivity('Meetings',m.id,m.title,'Completed',before,m);persist();return;
+ }
+ if(type==='Daily Plan'){
+  const entry=(data.dailyJournals?.[day]?.entries||[]).find(x=>String(x.id)===String(id));if(!entry)return;
+  const before=cloneRecord(entry);entry.status='Completed';entry.completedAt=new Date().toISOString();entry.updatedAt=entry.completedAt;
+  logActivity('Daily Plan',entry.id,entry.title,'Completed',{...before,dayDate:day},{...entry,dayDate:day});persist();return;
+ }
+ const collections={'Tentative Events':'tentativeEvents','Clients':'clients','Email Records':'communicationRecords','MOM':'meetingNotes','Approvals':'approvals','Travel':'trips','Events':'events','Vendors':'vendors','Quick Notes':'quickNotes','Instructions':'instructions','Reports/MIS':'reports'};
+ const collection=data[collections[type]];
+ const record=Array.isArray(collection)?collection.find(x=>String(x.id)===String(id)):null;
+ if(!record){el.checked=false;return;}
+ const before=cloneRecord(record),now=new Date().toISOString();
+ record.status='Completed';record.completedAt=now;record.updatedAt=now;
+ logActivity(type,record.id,record.title||record.subject||record.name||'Activity','Completed',before,record);
+ persist();
+ return;
 }
 if(a==='eda-home-meeting-complete'){
  const m=data.meetings.find(x=>String(x.id)===String(id));if(!m||m.status==='Completed')return;
