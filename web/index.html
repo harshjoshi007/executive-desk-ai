@@ -1132,8 +1132,48 @@ html[data-theme="dark"] .memory-search-panel,html[data-theme="dark"] .memory-res
 @media(max-width:1200px){.eda-home .eda-meeting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eda-home .eda-main-grid{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr)}.eda-home .eda-category-tag{display:none}}
 @media(max-width:900px){.eda-home .eda-main-grid{grid-template-columns:1fr}.eda-home .eda-meeting-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.eda-home .eda-main-left,.eda-home .eda-main-right{display:contents}.eda-home .eda-plan{order:1}.eda-home .eda-upcoming{order:2}.eda-home .eda-notes{order:3}.eda-home .eda-completed{order:4}}
 @media(max-width:700px){.eda-home .eda-hero{margin-bottom:11px}.eda-home .eda-hero h1{font-size:22px}.eda-home .eda-hero-history{padding:8px;font-size:11px}.eda-home .eda-stats{gap:7px;margin-bottom:12px}.eda-home .eda-stats button{min-height:70px;display:grid;gap:4px;text-align:center;padding:10px 5px;border-radius:12px}.eda-home .eda-stats strong{font-size:23px}.eda-home .eda-stats span{font-size:10px}.eda-home .eda-panel{padding:13px!important;border-radius:13px}.eda-home .eda-panel-heading h2{font-size:15px}.eda-home .eda-panel-heading>button{font-size:11px}.eda-home .eda-meetings{margin-bottom:12px}.eda-home .eda-meeting-grid{display:flex;flex-direction:column;gap:0}.eda-home .eda-meeting{border:0;border-radius:0;background:transparent;padding:10px 0;min-height:0;display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:8px;border-bottom:1px solid var(--line);align-items:center}.eda-home .eda-meeting.eda-next{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:11px;border:1px solid var(--pink);border-radius:10px;background:var(--rose);margin-bottom:6px}.eda-home .eda-meeting-top{grid-column:1;font-size:11px}.eda-home .eda-meeting-title{grid-column:2}.eda-home .eda-meeting-title b{font-size:12px}.eda-home .eda-next .eda-meeting-title{grid-column:auto}.eda-home .eda-meet-link{width:100%;margin-top:0}.eda-home .eda-meeting:not(.eda-next) .eda-menu{position:absolute;right:0;top:8px}.eda-home .eda-meeting:not(.eda-next){padding-right:29px}.eda-home .eda-main-grid{gap:12px}.eda-home .eda-main-left,.eda-home .eda-main-right{gap:12px}.eda-home .eda-upcoming-controls{flex-wrap:wrap}.eda-home .eda-prio-scroll{max-width:100%}.eda-home .eda-upcoming-row{gap:7px}.eda-home .eda-upcoming-title b{font-size:12px}.eda-home .eda-upcoming-title small{font-size:10px}.eda-home .eda-priority{display:none}.eda-home .eda-upcoming-row>.check{width:18px;height:18px}.eda-home .eda-menu-list{right:0}.eda-home .eda-month-controls strong{min-width:55px}}
+/* Fix native details dropdowns: closed menus must not render as floating empty boxes. */
+.eda-home details.eda-menu:not([open]) > .eda-menu-list,
+.v11-tasks-page details.v11-menu:not([open]) > .v11-menu-list{display:none!important}
+.eda-home .eda-upcoming-row:has(> details.eda-menu[open]),
+.eda-home .eda-meeting:has(details.eda-menu[open]){position:relative;z-index:120}
+.eda-home details.eda-menu[open]{z-index:130}
+/* Raise the entire Upcoming card above Completed Today, otherwise its background hides the dropdown. */
+.eda-home .eda-upcoming:has(.eda-menu[open]){position:relative;z-index:140}
+.eda-home .eda-upcoming-list,.eda-home .eda-upcoming,.eda-home .eda-upcoming-row{overflow:visible}
+.eda-home .eda-menu-list{display:block;right:0;top:calc(100% + 5px);width:218px;max-width:min(80vw,260px);max-height:min(360px,65vh);overflow-y:auto;z-index:135}
+.eda-home .eda-menu-list button{display:block!important;width:100%;min-height:36px;white-space:normal;text-align:left;line-height:1.35}
+.eda-home details.eda-menu{min-width:0!important;width:32px!important;height:32px!important;flex:0 0 32px!important;padding:0!important;box-shadow:none!important;border:0!important;background:transparent!important;border-radius:8px!important}
+.eda-home details.eda-menu > summary{min-width:32px!important;width:32px;height:32px;padding:0!important;display:grid!important;place-items:center!important;border:1px solid transparent;border-radius:8px}
+.eda-home details.eda-menu > summary:hover,.eda-home details.eda-menu[open] > summary{background:var(--rose,#fff0f3)!important;color:var(--pink,#ef587c)}
+/* A viewport-level dropdown avoids clipping by neighbouring cards. */
+.eda-home details.eda-menu > .eda-menu-list{display:none!important}
+.eda-home-floating-menu{position:fixed;z-index:100000;box-sizing:border-box;width:218px;max-width:calc(100vw - 16px);max-height:min(360px,65vh);overflow-y:auto;padding:6px;background:var(--card,#fff);color:var(--ink,#29282c);border:1px solid var(--line,#ebe9e7);border-radius:12px;box-shadow:0 14px 40px rgba(30,25,27,.22)}
+.eda-home-floating-menu button{display:block;width:100%;box-sizing:border-box;text-align:left;white-space:normal;padding:10px 11px;min-height:37px;border:0;border-radius:8px;background:transparent;color:var(--ink,#29282c);font-size:12px;font-weight:700;line-height:1.4;cursor:pointer}
+.eda-home-floating-menu button:hover,.eda-home-floating-menu button:focus-visible{background:var(--rose,#fff0f3)}
+.eda-home-floating-menu button.eda-destructive{color:#be425a}
+/* Restore the missing Task Manager route without altering other modules. */
+.v11-tasks-page{max-width:1450px;margin:0 auto;min-width:0}
+.v11-tasks-page .v11-pagehead{flex-wrap:wrap}
+.v11-task-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+.v11-task-summary button{min-height:77px;padding:13px 16px;border:1px solid var(--line);border-radius:13px;background:var(--card);display:grid;gap:3px;text-align:left;color:var(--ink)}
+.v11-task-summary strong{font-size:24px;line-height:1.1}
+.v11-task-summary span{font-size:11px;color:var(--muted)}
+.v11-task-tools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;align-items:center}
+.v11-task-search{flex:1;min-width:220px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);padding:0 11px;border-radius:10px}
+.v11-task-search svg{width:16px;height:16px;color:var(--muted)}
+.v11-task-search input{border:0!important;min-height:40px;flex:1;min-width:0;background:transparent!important;outline:none;color:var(--ink)}
+.v11-task-tools>select{width:auto;min-width:135px;max-width:100%;min-height:40px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px;border-radius:10px}
+.v11-task-filterbar{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:5px;scrollbar-width:thin}
+.v11-task-filterbar button{flex:0 0 auto;background:var(--card);border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:8px 12px;font-weight:750;font-size:12px}
+.v11-task-filterbar button.active{background:var(--pink);border-color:var(--pink);color:white}
+.v11-task-list{min-width:0}
+.v11-tasks-page .v11-task{position:relative}
+.v11-tasks-page .v11-task:has(details[open]){z-index:50}
+.v11-tasks-page .v11-menu[open]{z-index:55}
+@media(max-width:700px){.v11-task-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.v11-task-tools>select{flex:1;min-width:120px}.eda-home .eda-menu-list{width:200px;max-width:calc(100vw - 35px)}}
 </style>
-<link rel="stylesheet" href="./eda-upgrades.css?v=20261114" />
+<link rel="stylesheet" href="./eda-upgrades.css?v=20261114-fix3" />
 </head><body><div id="root"></div><script src="cloud.js"></script><script>
 const ICONS={home:'<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-8h6v8"/>',tasks:'<rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 2.5 2.5L16 9"/>',calendar:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',brain:'<path d="M12 18V6M8 20a4 4 0 0 1-5-4 4 4 0 0 1 1-7 4 4 0 0 1 4-5 4 4 0 0 1 4 4 4 4 0 0 1 4-4 4 4 0 0 1 4 5 4 4 0 0 1 1 7 4 4 0 0 1-5 4 4 4 0 0 1-4-2 4 4 0 0 1-4 2z"/>',bell:'<path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/>',plus:'<path d="M12 5v14M5 12h14"/>',sparkles:'<path d="m12 3 1.9 6.1L20 11l-6.1 1.9L12 19l-1.9-6.1L4 11l6.1-1.9zM19 19v4M17 21h4"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/>',chevron:'<path d="m9 18 6-6-6-6"/>',more:'<circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',mic:'<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/>',users:'<circle cx="9" cy="8" r="4"/><path d="M2 21v-2a7 7 0 0 1 14 0v2M17 5a4 4 0 0 1 0 7M19 16a5 5 0 0 1 3 5"/>',plane:'<path d="m22 2-8 20-3-9-9-3zM22 2 11 13"/>',file:'<path d="M6 2h9l5 5v15H6zM15 2v6h5M9 13h8M9 17h8"/>',settings:'<circle cx="12" cy="12" r="3"/><path d="M19 13a7 7 0 0 0 0-2l2-2-2-4-3 1a7 7 0 0 0-2-1l-1-3h-4L8 5a7 7 0 0 0-2 1L3 5 1 9l2 2a7 7 0 0 0 0 2l-2 2 2 4 3-1a7 7 0 0 0 2 1l1 3h4l1-3a7 7 0 0 0 2-1l3 1 2-4z"/>',download:'<path d="M12 3v12m-4-4 4 4 4-4M4 17v4h16v-4"/>',upload:'<path d="M12 16V4m-4 4 4-4 4 4M4 17v4h16v-4"/>',x:'<path d="M6 6l12 12M18 6 6 18"/>',menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',check:'<path d="m5 12 5 5L20 7"/>',info:'<circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/>',arrow:'<path d="M5 12h14m-6-6 6 6-6 6"/>',message:'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9 9 0 0 1-4-.9L3 21l1.9-5a9 9 0 0 1-.9-4A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5z"/>',list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',moon:'<path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9 6.3 6.3M17.7 17.7 19.1 19.1M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',shield:'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z"/><path d="m9 12 2 2 4-4"/>',trash:'<path d="M4 7h16M10 11v7M14 11v7M6 7l1 14h10l1-14M9 7V4h6v3"/>',folder:'<path d="M3 7h7l2 3h9v11H3z"/>',alert:'<path d="M12 3 2 21h20zM12 9v5M12 18h.01"/>',grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',briefcase:'<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/>',map:'<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/>',pin:'<path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2"/>',building:'<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M9 21v-5h6v5M8 8h1M15 8h1M8 12h1M15 12h1"/>',checklist:'<path d="m3 6 2 2 3-4M11 6h10M3 13h18M3 19h18"/>',link:'<path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/>',lock:'<rect x="4" y="10" width="16" height="12" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',cloud:'<path d="M20 17.6a4.5 4.5 0 0 0-1.4-8.8A7 7 0 0 0 5.1 11 4 4 0 0 0 6 19h13"/>',mobile:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 7 9-7"/>',video:'<rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/>',external:'<path d="M14 3h7v7M21 3l-10 10"/><path d="M21 14v7H3V3h7"/>',send:'<path d="m22 2-7 20-4-9-9-4zM22 2 11 13"/>'};
 function icon(n,cl=''){return `<svg class="${cl}" aria-hidden="true" viewBox="0 0 24 24">${ICONS[n]||ICONS.grid}</svg>`}
@@ -1238,6 +1278,40 @@ function finalTodayRight(){let myDay=(data.dailyJournals?.[indiaDate()]?.entries
 function finalMobileHome(){let myDay=(data.dailyJournals?.[indiaDate()]?.entries||[]).slice().sort((a,b)=>(a.time||'99:99').localeCompare(b.time||'99:99'));let tasks=data.tasks.filter(t=>t.status!=='Completed'),meets=schedule(),follows=data.followups;let due=follows.filter(f=>classifyFollow(f)==='Due Today').length,over=follows.filter(f=>classifyFollow(f)==='Overdue').length,wait=follows.filter(f=>classifyFollow(f)==='Waiting').length,done=follows.filter(f=>classifyFollow(f)==='Completed').length;let todayMeets=meets.slice(0,3);return `<div class="phone-greeting"><div><span> ${esc(greeting())},</span><h1>You're in control.</h1><p>Here's your day at a glance.</p></div><button class="date-chip" data-action="navigate" data-id="Calendar">${icon('calendar')} ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'})} ${icon('chevron')}</button></div><div class="mobile-stats"><button data-action="navigate" data-id="Tasks" class="mobile-stat pink"><span>${icon('tasks')}</span><b>${tasks.length}</b><small>Tasks</small></button><button data-action="navigate" data-id="Calendar" class="mobile-stat yellow"><span>${icon('calendar')}</span><b>${meets.length}</b><small>Meetings</small></button><button data-action="navigate" data-id="More" data-sub="followups" class="mobile-stat green"><span>${icon('clock')}</span><b>${follows.filter(f=>f.status!=='Completed').length}</b><small>Follow-ups</small></button><button data-action="navigate" data-id="More" data-sub="travel" class="mobile-stat grey"><span>${icon('plane')}</span><b>${data.trips.length}</b><small>Travel</small></button></div><button class="mobile-ai" data-action="navigate" data-id="More" data-sub="ai"><span class="mobile-ai-icon">${icon('sparkles')}</span><span><b>Ask Executive AI</b><small>Search tasks, notes, or past instructions.</small></span>${icon('chevron')}</button><div class="mobile-quick"><button data-action="navigate" data-id="Capture">${icon('mic')} Voice to Task</button><button data-action="open-modal" data-id="task">${icon('plus')} New Task</button></div><button class="mobile-plan-btn" data-action="navigate" data-id="More" data-sub="planner">${icon('sparkles')} My Daily Plan <span>→</span></button><section class="mobile-panel"><div class="mob-panel-head"><h2>Today's Plan</h2><button data-action="navigate" data-id="More" data-sub="planner">My Daily Plan ${icon('arrow')}</button></div><div class="mob-timeline">${myDay.length?myDay.slice(0,5).map(x=>`<div class="mob-time-row"><span class="mob-circle ${x.status==='Completed'?'dim':''}"></span><time>${x.time?formatClock(x.time):'Anytime'}</time><div><b>${esc(x.title)}</b><small>${esc(x.type)}${x.status==='Completed'?' · Done':''}</small></div></div>`).join(''):'<p class="time-empty">Your personal plan is empty. Add your own timed tasks, calls and notes.</p>'}</div></section><section class="mobile-panel mobile-reminders"><div class="mob-panel-head"><h2>Important reminders</h2><button data-action="navigate" data-id="More" data-sub="notifications">Settings ${icon('arrow')}</button></div><div class="home-alerts">${homeAlerts(2)}</div><p class="inline-status-hint">In-app reminders · WhatsApp and push not active</p></section><section class="mobile-panel follow-panel"><div class="mob-panel-head"><h2>Follow-up Centre</h2><button data-action="navigate" data-id="More" data-sub="followups">View all ${icon('arrow')}</button></div><div class="follow-stats">${[[due,'Due Today','pink'],[over,'Overdue','coral'],[wait,'Waiting','yellow'],[done,'Completed','green']].map(([n,l,c])=>`<button class="follow-mini ${c}" data-action="navigate" data-id="More" data-sub="followups"><b>${n}</b><small>${l}</small></button>`).join('')}</div></section><div class="mobile-footnote">${window.edaCloud?.active?'Shared workspace':'Local preview'} · Google / push alerts not live</div>`}
 function today(){return v11Home();}
 function previewBanner(){return Object.values(data).some(x=>Array.isArray(x)&&x.some(z=>z.demo))?`<div class="preview-banner"><span><b>Preview mode:</b> Sample entries help demonstrate the design. Your records save in this workspace (cloud sync requires setup).</span><button data-action="clear-samples">Remove sample data</button></div>`:`<div class="preview-banner"><span><b>Local prototype:</b> Your changes are local until cloud sync is configured and you sign in.</span></div>`}
+// Task Manager is a first-class workspace route. It must exist for desktop sidebar,
+// mobile Workspace navigation, Home counters, MOM linked tasks and global search.
+function v11TasksPage(){
+ const tasks=Array.isArray(data.tasks)?data.tasks:[];
+ const filter=ui.taskFilter||'All',priority=ui.taskPriority||'All',sort=ui.taskSort||'Due soon';
+ const query=String(ui.taskQuery||'').trim().toLowerCase(),today=indiaDate();
+ const dueDay=t=>taskCalendarDate(t)||'';
+ const active=t=>t.status!=='Completed'&&t.status!=='Cancelled';
+ const matches=t=>{
+  if(query&&!([t.title,t.person,t.priority,t.status,t.note,t.description].some(v=>String(v||'').toLowerCase().includes(query))))return false;
+  if(priority!=='All'&&t.priority!==priority)return false;
+  const day=dueDay(t);
+  if(filter==='Pending'&&!active(t))return false;
+  if(filter==='Completed'&&t.status!=='Completed')return false;
+  if(filter==='Cancelled'&&t.status!=='Cancelled')return false;
+  if(filter==='Overdue'&&!(active(t)&&day&&day<today))return false;
+  if(filter==='Today'&&!(active(t)&&day===today))return false;
+  if(filter==='Upcoming'&&!(active(t)&&day>today))return false;
+  return true;
+ };
+ const shown=tasks.filter(matches).slice().sort((a,b)=>{
+  if(sort==='Newest')return String(b.createdAt||b.updatedAt||'').localeCompare(String(a.createdAt||a.updatedAt||''));
+  if(sort==='Priority'){const weight={Critical:0,High:1,Medium:2,Normal:2,Low:3};return (weight[a.priority]??4)-(weight[b.priority]??4)||String(dueDay(a)||'9999').localeCompare(String(dueDay(b)||'9999'));}
+  if(sort==='Title')return String(a.title||'').localeCompare(String(b.title||''));
+  return String(dueDay(a)||'9999-12-31').localeCompare(String(dueDay(b)||'9999-12-31'));
+ });
+ const filters=['All','Pending','Today','Upcoming','Overdue','Completed','Cancelled'];
+ const selection=(id,opts,value)=>`<select id="${id}" class="field" aria-label="${id==='task-priority-select'?'Filter priority':'Sort tasks'}">${opts.map(x=>`<option value="${esc(x)}" ${value===x?'selected':''}>${esc(x)}</option>`).join('')}</select>`;
+ return `<div class="v11-tasks-page"><div class="v11-pagehead"><div><span class="eyebrow">TASK MANAGER</span><h1>Task Manager</h1><p>Track pending work, deadlines, priorities and completed tasks in one place.</p></div><button type="button" class="btn" data-action="open-modal" data-id="task">${icon('plus')} Add Task</button></div>
+ <div class="v11-task-summary"><button data-action="task-open-filter" data-id="Pending"><strong>${tasks.filter(active).length}</strong><span>Pending</span></button><button data-action="task-open-filter" data-id="Today"><strong>${tasks.filter(t=>active(t)&&dueDay(t)===today).length}</strong><span>Due Today</span></button><button data-action="task-open-filter" data-id="Overdue"><strong>${tasks.filter(t=>active(t)&&dueDay(t)&&dueDay(t)<today).length}</strong><span>Overdue</span></button><button data-action="task-open-filter" data-id="Completed"><strong>${tasks.filter(t=>t.status==='Completed').length}</strong><span>Completed</span></button></div>
+ <section class="v11-card"><div class="v11-task-tools"><label class="v11-task-search">${icon('search')}<input id="tasksearch" class="field" type="search" placeholder="Search tasks, people or details…" value="${esc(ui.taskQuery||'')}" aria-label="Search tasks"></label>${selection('task-priority-select',['All','Critical','High','Medium','Normal','Low'],priority)}${selection('task-sort-select',['Due soon','Priority','Newest','Title'],sort)}</div>
+ <div class="v11-task-filterbar" role="group" aria-label="Task status filters">${filters.map(x=>`<button type="button" class="${filter===x?'active':''}" data-action="task-open-filter" data-id="${x}">${x}</button>`).join('')}</div>
+ <p class="v11-list-count">${shown.length} task${shown.length===1?'':'s'} found</p><div class="v11-task-list">${shown.map(v11CompactTask).join('')||'<p class="v11-empty">No tasks match these filters. Your saved tasks are unchanged.</p>'}</div></section></div>`;
+}
 function tasksPage(){return v11TasksPage();}
 function capturePage(){
  if(ui.captureMode==='note')return v11CaptureTabs()+v11CaptureNote();
@@ -2135,6 +2209,38 @@ function edaHomeRecordMenu(r){
  if(notification){body+=`<button data-action="eda-home-snooze" data-id="${esc(notification.id)}" data-minutes="60">Snooze alert · 1 hour</button>`;body+=`<button data-action="eda-home-alert-read" data-id="${esc(notification.id)}">${data.notificationState.read[notification.id]?'Mark alert unread':'Mark alert read'}</button>`;}
  return `<details class="eda-menu"><summary aria-label="Actions for ${esc(r.title)}" title="Actions">${icon('more')}</summary><div class="eda-menu-list">${body}</div></details>`;
 }
+// Home menu actions are portalled to document.body so cards underneath cannot
+// cover the dropdown (the original nested details options are not displayed).
+let edaOpenHomeMenu=null;
+function edaCloseHomeMenu(){
+ if(edaOpenHomeMenu){const d=edaOpenHomeMenu.details;edaOpenHomeMenu.popup.remove();edaOpenHomeMenu=null;if(d?.isConnected&&d.open)d.open=false;}
+}
+document.addEventListener('toggle',event=>{
+ const d=event.target;
+ if(!(d instanceof HTMLDetailsElement)||!d.matches('.eda-home details.eda-menu'))return;
+ if(!d.open){if(edaOpenHomeMenu?.details===d)edaCloseHomeMenu();return;}
+ edaCloseHomeMenu();d.open=true;
+ const source=d.querySelector('.eda-menu-list'),anchor=d.querySelector('summary');if(!source||!anchor)return;
+ const popup=document.createElement('div');popup.className='eda-home-floating-menu';
+ popup.setAttribute('role','group');popup.setAttribute('aria-label',anchor.getAttribute('aria-label')||'Activity actions');
+ popup.innerHTML=source.innerHTML;
+ document.body.appendChild(popup);
+ const a=anchor.getBoundingClientRect(),height=popup.getBoundingClientRect().height,width=popup.getBoundingClientRect().width;
+ const left=Math.max(8,Math.min(innerWidth-width-8,a.right-width));
+ const below=innerHeight-a.bottom-8,above=a.top-8;
+ const top=below>=Math.min(height,300)||below>=above?Math.min(innerHeight-height-8,a.bottom+5):Math.max(8,a.top-height-5);
+ popup.style.left=left+'px';popup.style.top=Math.max(8,top)+'px';
+ edaOpenHomeMenu={details:d,popup};
+},true);
+document.addEventListener('click',e=>{
+ if(!edaOpenHomeMenu)return;
+ if(e.target.closest('.eda-home-floating-menu')){setTimeout(edaCloseHomeMenu,0);return;}
+ if(e.target.closest('.eda-home details.eda-menu'))return;
+ edaCloseHomeMenu();
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')edaCloseHomeMenu()});
+window.addEventListener('scroll',edaCloseHomeMenu,true);
+window.addEventListener('resize',edaCloseHomeMenu);
 function edaHomeUpcoming(){
  edaHomeState();const all=edaHomeItems(),filtered=edaHomeFiltered(all),monthLabel=new Date(ui.edaHomeMonth+'-01T12:00:00Z').toLocaleDateString('en-IN',{month:'short',year:'numeric',timeZone:'UTC'});
  const cats=['All Activities','Task','Meeting','Follow-up','CRM','Gmail','MOM','Approval','Travel','Event','Vendor','Note','Memory','Daily Plan','Reports / MIS'];
@@ -2339,6 +2445,7 @@ if(a==='home-day-toggle'){
  logActivity('Daily Plan',entry.id,entry.title,entry.status==='Completed'?'Completed':'Reopened',{...before,dayDate:day},{...entry,dayDate:day});persist();return;
 }
 // These handlers are inserted only into the existing data-action click delegation.
+if(a==='task-open-filter'){ui.taskFilter=id;nav('Tasks');return;}
 if(a==='eda-home-history'){ui.historyView='Activity';nav('Activity');return;}
 if(a==='eda-home-pending'){ui.taskFilter='All';nav('Tasks');return;}
 if(a==='eda-home-meetings'){nav('Calendar');return;}
@@ -2601,7 +2708,7 @@ document.addEventListener('submit',e=>{
  ui.memoryEditId=null;ui.modal=null;ui.selectedRecord=null;save();render();toast(old?'Memory updated.':'Memory saved to Executive Memory.');
 },true);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&ui.mobilePlannerPanel){ui.mobilePlannerPanel=null;render();return}if(e.key==='Escape'&&(ui.notifOpen||ui.selectedRecord)){ui.notifOpen=false;ui.selectedRecord=null;render()}if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();nav('Search');document.querySelector('#globalSearch')?.focus()}});
-</script><script src="./eda-upgrades.js?v=20261114"></script>
+</script><script src="./eda-upgrades.js?v=20261114-fix3"></script>
 <script>
 if ('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1' || location.hostname==='[::1]')) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
