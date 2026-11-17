@@ -54,7 +54,27 @@ async function poll(){if(!s.ready||s.busy||s.pending||s.conflict||navigator.onLi
  try{const row=await request('workspace');if(row.revision!==s.revision){s.revision=row.revision;s.base=copy(row.payload);s.lastSync=Date.now();s.status='Synced';window.EDA_SET_WORKSPACE(row.payload);}else{s.status='Synced';s.lastSync=Date.now();paint()}}
  catch(e){s.error=e.message;s.status='Connection error';paint()}
 }
+async function resetAllData(){
+ if(!s.ready)throw new Error('Sign in before resetting data.');
+ if(!confirm('This will PERMANENTLY erase ALL saved project records, Executive Memory, Activity, Trash, server backup snapshots and reminder history for this account across all devices. Existing Google Calendar events are not deleted. Continue?'))return false;
+ const phrase=prompt('Final confirmation: type RESET ALL DATA to erase the entire Executive Desk AI workspace.');
+ if(phrase!=='RESET ALL DATA')return false;
+ // No local sync is allowed to overwrite the freshly cleared server workspace.
+ clearTimeout(s.debounce);
+ const r=await request('workspace/reset',{method:'POST'});
+ s.pendingSeq++;s.ackSeq=s.pendingSeq;s.pending=null;s.conflict=false;s.error='';
+ s.revision=r.revision;s.base=copy(r.payload);s.lastSync=Date.now();
+ s.status='Synced';s.notified={};preserve();
+ try{localStorage.removeItem('executive-desk-ai-v14-local-v1');
+     localStorage.removeItem('executive-desk-ai-final-ui-preview-v1');}catch{}
+ s.google={configured:s.googleConfigured,connected:false,push_ready:false,push_devices:0};
+ s.whatsapp={configured:false,number:'',enabled:false};
+ window.EDA_SET_WORKSPACE(r.payload);
+ paint();
+ return true;
+}
 async function action(kind){
+ if(kind==='reset-all'){await resetAllData();return;}
  if(kind==='download'){download(s.pending||window.EDA_GET_WORKSPACE(),'executive-desk-backup-'+new Date().toISOString().slice(0,10)+'.json');return;}
  if(kind==='import'){document.querySelector('#eda-import-file')?.click();return;}
  if(kind==='logout'){if(s.pending && !confirm('Unsynced changes exist. Download a backup before signing out. Continue?'))return;
