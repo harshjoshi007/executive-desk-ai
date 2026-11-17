@@ -231,6 +231,52 @@ def create_app(db_path=None):
                                      'server_revision':row['revision']},status_code=409)
         return {'revision':v,'synced':True}
 
+    @app.post('/api/workspace/reset')
+    def reset_workspace(request: Request):
+        """Clear this signed-in user's workspace and historical server snapshots.
+
+        Keep the login account, but revoke integrations/subscriptions and remove
+        queued reminder delivery markers. Nothing is added to Activity History.
+        Existing events in the external Google account are not deleted.
+        """
+        me = require_user(request, change=True)
+        from .core import two_sample_workspace, utc_now
+        blank = two_sample_workspace()
+        # Reset must be genuinely empty; new-account demo records are not suitable.
+        for key, value in list(blank.items()):
+            if isinstance(value, list):
+                blank[key] = []
+        blank['dailyJournals'] = {}
+        blank['notificationState'] = {'read': {}, 'snoozed': {}, 'dismissed': {}}
+        blank['preferences'] = {'appearance': 'system', 'push': False,
+                                'whatsapp': False, 'email': False, 'afterhours': False}
+        content = json.dumps(blank, ensure_ascii=False, separators=(',', ':'))
+        with get_db() as db:
+            db.execute('BEGIN IMMEDIATE')
+            try:
+                row = db.execute('SELECT revision FROM workspaces WHERE user_id=?',
+                                 (me['id'],)).fetchone()
+                new_revision = (int(row['revision']) if row else 0) + 1
+                if row:
+                    db.execute('UPDATE workspaces SET revision=?,data_json=?,updated_at=? '
+                               'WHERE user_id=?', (new_revision, content, utc_now(), me['id']))
+                else:
+                    db.execute('INSERT INTO workspaces(user_id,revision,data_json,updated_at) '
+                               'VALUES(?,?,?,?)', (me['id'], new_revision, content, utc_now()))
+                # Prevent reset records from appearing in server backup history.
+                for table in ('snapshots', 'push_log', 'whatsapp_log', 'email_log',
+                              'push_subscriptions', 'whatsapp_settings', 'google_accounts',
+                              'oauth_states'):
+                    if table == 'oauth_states':
+                        db.execute('DELETE FROM oauth_states WHERE user_id=?', (me['id'],))
+                    else:
+                        db.execute(f'DELETE FROM {table} WHERE user_id=?', (me['id'],))
+                db.execute('COMMIT')
+            except Exception:
+                db.execute('ROLLBACK')
+                raise
+        return {'reset': True, 'revision': new_revision, 'payload': blank}
+
     @app.get('/api/backups')
     def backups(request:Request):
         me=require_user(request)
